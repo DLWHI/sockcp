@@ -1,6 +1,7 @@
 #ifndef SOCKCP_SOCKCP_SOCKET_H_
 #define SOCKCP_SOCKCP_SOCKET_H_
 
+#include <vector>
 
 #if defined(PROJ_OS_LINUX) || defined(PROJ_OS_OSX) || defined(PROJ_OS_CYGWIN)
 

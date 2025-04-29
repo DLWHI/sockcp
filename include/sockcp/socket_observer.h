@@ -23,7 +23,7 @@ namespace sockcp {
     in = POLLIN,
     pri = POLLPRI,
     out = POLLOUT,
-    rdhup, POLLRDHUP,
+    rdhup = POLLRDHUP,
     err = POLLERR,
     hup = POLLHUP,
     nval = POLLNVAL,

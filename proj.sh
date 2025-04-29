@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 BUILD_PREFIX="build-$(uname)";
 if [ $# -ne 1 ]; then
     echo "proj: unknown action specified";
@@ -36,7 +36,7 @@ elif [ $1 = "test" ]; then
     fi;
     cd ${BUILD_PREFIX} && ctest
 elif [ $1 = "install" ]; then
-    cmake --install ${BUILD_PREFIX} --config ${CMAKE_BUILD_TYPE} --target ${TARGET_NAME};
+    cmake --install ${BUILD_PREFIX} --config ${CMAKE_BUILD_TYPE};
 elif [ $1 = "memcheck" ]; then
     cmake --build ${BUILD_PREFIX} --config ${CMAKE_BUILD_TYPE} --target unit_tests;
     if [ $? -ne 0 ]; then

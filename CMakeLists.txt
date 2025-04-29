@@ -25,7 +25,7 @@ include(SetPlatformFlags)
 include(EnableGoogleTest)
 include(CTest)
 
-install(FILES ${HEADERS} DESTINATION ${CMAKE_INSTALL_PREFIX}/include/)
+install(FILES ${HEADERS} DESTINATION ${CMAKE_INSTALL_PREFIX}/include/sockcp)
 
 include_directories(include)
 
