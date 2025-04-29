@@ -49,7 +49,7 @@ if "%1" equ "test" (
 )
 
 if "%1" equ "install" (
-    cmake --install %BUILD_PREFIX% --config %CMAKE_BUILD_TYPE% --target %TARGET_NAME%
+    cmake --install %BUILD_PREFIX% --config %CMAKE_BUILD_TYPE%
     exit /B 0
 )
 
