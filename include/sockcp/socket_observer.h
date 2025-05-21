@@ -26,6 +26,7 @@ namespace sockcp {
     err = POLLERR,
     hup = POLLHUP,
     nval = POLLNVAL,
+    all = POLLIN | POLLPRI | POLLOUT | POLLERR | POLLHUP | POLLNVAL,
     no_event = 0x0
   };
 
@@ -103,21 +104,21 @@ namespace sockcp {
       }
       return events;
     }
-
-    template <typename ProtocolFamily>
-    event poll(const basic_socket<ProtocolFamily>& sock, std::chrono::milliseconds timeout) {
-      auto pos = std::find_if(socket_fds_.begin(), socket_fds_.end(), pollfd_comp{sock.fd()});
-      SOCKCP_ASSERT(pos != socket_fds_.end(), std::runtime_error("No such socket"));
-      std::size_t i = std::distance(socket_fds_.begin(), pos);
-      int r = ::poll(&socket_fds_[i], 1, timeout.count());
-      SOCKCP_ASSERT(r >= 0, socket_error());
-      event res = static_cast<event>(socket_fds_[i].revents);
-      socket_fds_[i].revents = 0;
-      return res;
-    }
    private:
     std::vector<::pollfd> socket_fds_;
   };
+  
+  template <typename ProtocolFamily>
+  event poll(const basic_socket<ProtocolFamily>& sock, std::chrono::milliseconds timeout) {
+    ::pollfd pfd{};
+    pfd.fd = sock.fd();
+    pfd.events = static_cast<short>(event::all);
+    int r = ::poll(&pfd, 1, timeout.count());
+    SOCKCP_ASSERT(r >= 0, socket_error());
+    event res = static_cast<event>(pfd.revents);
+    return res;
+  }
+  
 }  // namespace sockcp
 
 #endif  // SOCKCP_SOCKCP_SOCKET_OBSERVER_H_
