@@ -118,7 +118,12 @@ namespace sockcp {
     event res = static_cast<event>(pfd.revents);
     return res;
   }
-  
+
+  template <typename ProtocolFamily>
+  bool is_alive(const basic_socket<ProtocolFamily>& sock, std::chrono::milliseconds timeout) {
+    event ev = poll(sock, timeout);
+    return static_cast<bool>(ev & event::out) | static_cast<bool>(ev & event::in) | static_cast<bool>(ev & event::pri);
+  }
 }  // namespace sockcp
 
 #endif  // SOCKCP_SOCKCP_SOCKET_OBSERVER_H_
