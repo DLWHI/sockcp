@@ -98,7 +98,7 @@ namespace sockcp {
     void set_address(const char* address)  {
       SOCKCP_ASSERT(
         ::inet_pton(family, address, &addr.sin_addr) > 0, 
-        protocol_error("Invalid address provided")
+        protocol_error("Invalid address provided", typeid(ipv4))
       );
     }
 
@@ -109,7 +109,7 @@ namespace sockcp {
     const ::sockaddr* data() const noexcept {
       return reinterpret_cast<const sockaddr*>(&addr);
     }
-    
+
     ::sockaddr* data() noexcept {
       return reinterpret_cast<sockaddr*>(&addr);
     }
@@ -125,7 +125,7 @@ namespace sockcp {
     }
 
     ipv6(const ::sockaddr_in6& addr_data) noexcept : addr(addr_data) {}
-    
+
     ipv6(uint8_t address[16], uint16_t p = 0) noexcept : ipv6() {
       SOCKCP_WRAP_NOEXCEPT(
         std::copy(address, address + 16, addr.sin6_addr.s6_addr);
@@ -138,7 +138,7 @@ namespace sockcp {
     ipv6(const char* address, uint16_t port = 0) : ipv6() {
       SOCKCP_ASSERT(
         ::inet_pton(family, address, &addr.sin6_addr) > 0, 
-        protocol_error("Invalid address provided")
+        protocol_error("Invalid address provided", typeid(ipv4))
       )
       addr.sin6_port = ::htons(port);
     }
@@ -183,9 +183,9 @@ namespace sockcp {
     void set_address(const char* address)  {
       SOCKCP_ASSERT(
         ::inet_pton(family, address, &addr.sin6_addr) > 0,
-        protocol_error("Invalid address provided")
+        protocol_error("Invalid address provided", typeid(ipv4))
       );
-    }    
+    }
 
     void set_address(const std::string& address) {
       set_address(address.c_str());
@@ -194,7 +194,7 @@ namespace sockcp {
     const ::sockaddr* data() const noexcept {
       return reinterpret_cast<const sockaddr*>(&addr);
     }
-    
+
     ::sockaddr* data() noexcept {
       return reinterpret_cast<sockaddr*>(&addr);
     }

@@ -16,7 +16,7 @@ set(TEST_SOURCES
   tests/ipv4_tests.cc
 )
 
-set(CMAKE_MODULE_PATH 
+set(CMAKE_MODULE_PATH
     ${CMAKE_SOURCE_DIR}/cmake
 )
 

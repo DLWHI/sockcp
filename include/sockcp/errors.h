@@ -6,6 +6,7 @@
 #include <stdexcept>
 #include <string>
 #include <string_view>
+#include <typeinfo>
 
 #define SOCKCP_WRAP_NOEXCEPT(expr) try{expr}catch(...){}
 
@@ -18,18 +19,29 @@ namespace sockcp {
 
 class protocol_error: public std::runtime_error {
  public:
-  protocol_error(const char* msg) : std::runtime_error(msg) {}
-  protocol_error(std::string msg) : std::runtime_error(msg.c_str()) {}
-  protocol_error(std::string_view msg) : std::runtime_error(msg.data()) {}
+  protocol_error(const char* msg, const std::type_info& source)
+      : std::runtime_error(msg), source_(source)  {}
+  protocol_error(std::string msg, const std::type_info& source)
+      : std::runtime_error(msg.c_str()), source_(source) {}
+  protocol_error(std::string_view msg, const std::type_info& source)
+      : std::runtime_error(msg.data()), source_(source) {}
+
+  const std::type_info& protocol() { return source_;}
+private:
+  const std::type_info& source_;
 };
 
 class socket_error: public std::runtime_error {
  public:
-  socket_error() : errno_(errno), std::runtime_error(std::strerror(errno)) {}
+  socket_error(const std::string_view& source) 
+    : std::runtime_error(std::strerror(errno)),
+      errno_(errno),
+      source_(source.begin(), source.end()) {}
 
   int code() { return errno_;}
  private:
   int errno_;
+  std::string source_;
 };
 
 }  // namespace sockcp

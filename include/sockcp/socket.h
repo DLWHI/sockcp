@@ -2,6 +2,8 @@
 #define SOCKCP_SOCKCP_SOCKET_H_
 
 #include <vector>
+#include <string>
+#include <string_view>
 
 #if defined(PROJ_OS_LINUX) || defined(PROJ_OS_OSX) || defined(PROJ_OS_CYGWIN)
 
@@ -21,7 +23,7 @@
 
 namespace sockcp {
 
-  enum socktype {
+  enum class socktype {
     stream = SOCK_STREAM,
     datagram = SOCK_DGRAM,
     seqpacket = SOCK_SEQPACKET,
@@ -82,7 +84,7 @@ namespace sockcp {
     basic_socket(socktype type, int protocol = 0) 
         : type_(static_cast<int>(type)) {
       fd_ = ::socket(protocol_family, type_, protocol);
-      SOCKCP_ASSERT(fd_ > 0, socket_error());
+      SOCKCP_ASSERT(fd_ > 0, socket_error("basic_socket"));
     }
 
     basic_socket(basic_socket&) = delete;
@@ -119,7 +121,7 @@ namespace sockcp {
     void bind(ProtocolFamily addr) {
       SOCKCP_ASSERT(
         ::bind(fd_, addr.data(), addr.size()) == 0, 
-        socket_error()
+        socket_error("bind")
       );
       name_ = addr;
     }
@@ -131,13 +133,13 @@ namespace sockcp {
     void connect(ProtocolFamily addr) {
       errno = 0;
       ::connect(fd_, addr.data(), addr.size());
-      SOCKCP_ASSERT(!errno || errno == EINPROGRESS, socket_error());
+      SOCKCP_ASSERT(!errno || errno == EINPROGRESS, socket_error("connect"));
     }
 
     void listen(int backlog = 0) {
       SOCKCP_ASSERT(
         ::listen(fd_, backlog) == 0, 
-        socket_error()
+        socket_error("listen")
       );
     }
 
@@ -148,15 +150,37 @@ namespace sockcp {
       int newfd = ::accept(fd_, addr.data(), &len);
       SOCKCP_ASSERT(
         !errno || errno == EAGAIN || errno == EWOULDBLOCK,
-        socket_error()
+        socket_error("accept")
       );
       return basic_socket(newfd, addr);
     }
 
-    std::string read(std::size_t count = std::size_t(-1)) {
+    char peek() {
+      char c = -1;
+      errno = 0;
+      ::recv(fd_, &c, 1, MSG_DONTWAIT | MSG_PEEK);
+      SOCKCP_ASSERT(
+        !errno || errno == EAGAIN || errno == EWOULDBLOCK,
+        socket_error("peek")
+      );
+      return c;
+    }
+
+    std::size_t read(char* mem, std::size_t count) {
+      std::size_t rdbytes = -1;
+      errno = 0;
+      rdbytes = ::recv(fd_, mem, count, 0);
+      SOCKCP_ASSERT(
+        !errno || errno == EAGAIN || errno == EWOULDBLOCK,
+        socket_error("read")
+      );
+      return rdbytes;
+    }
+
+    std::vector<char> read(std::size_t count = std::size_t(-1)) {
       static constexpr std::size_t kBufLen = 255;
-      std::string res;
-      std::string buf;
+      std::vector<char> res;
+      std::vector<char> buf;
       buf.resize(kBufLen);
       std::size_t rdbytes = kBufLen;
       for (; count && rdbytes == kBufLen;) {
@@ -164,9 +188,9 @@ namespace sockcp {
         rdbytes = ::recv(fd_, buf.data(), kBufLen, 0);
         SOCKCP_ASSERT(
           !errno || errno == EAGAIN || errno == EWOULDBLOCK,
-          socket_error()
+          socket_error("read")
         );
-        res.append(buf, 0, rdbytes);
+        res.insert(res.end(), buf.begin(), buf.end());
         count -= rdbytes;
       }
       return res;
@@ -181,7 +205,7 @@ namespace sockcp {
         std::size_t wrbytes = ::send(fd_, data, chunk, 0);
         SOCKCP_ASSERT(
           !errno || errno == EAGAIN || errno == EWOULDBLOCK,
-          socket_error()
+          socket_error("write")
         );
         count -= wrbytes;
         data += wrbytes;
@@ -196,13 +220,8 @@ namespace sockcp {
       write(data.data(), data.size(), chunk);
     }
 
-    template <typename T>
-    void write(const std::vector<T>& data, std::size_t chunk = 0) {
-      write(
-        reinterpret_cast<const char*>(data.data()),
-        sizeof(T)*data.size(),
-        chunk
-      );
+    void write(const std::vector<char>& data, std::size_t chunk = 0) {
+      write(data.data(), data.size(), chunk);
     }
 
     void shutdown(closeway how) {

@@ -30,7 +30,8 @@ int main(int argc, char* argv[]) {
     std::thread daemon([cl_sock_ptr, &wr_lock]() {
       bool is_alive = true;
       for (;is_alive;) {
-        std::string resp = cl_sock_ptr->read();
+        std::vector<char> data = cl_sock_ptr->read();
+        std::string resp(data.begin(), data.end());
         wr_lock.lock();
         std::cout << resp << std::endl;
         wr_lock.unlock();

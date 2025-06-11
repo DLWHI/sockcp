@@ -88,41 +88,35 @@ namespace sockcp {
       SOCKCP_ASSERT(pos != socket_fds_.end(), std::runtime_error("No such socket"));
       socket_fds_.erase(pos);
     }
-    
+
     std::unordered_map<int, event> poll(std::chrono::milliseconds timeout) {
       int r = ::poll(socket_fds_.data(), socket_fds_.size(), timeout.count());
       std::unordered_map<int, event> events;
       if (r < 0) {
-        throw socket_error();
+        throw socket_error("poll");
       } else if (r > 0) {
         for (auto& pfd : socket_fds_) {
           if (pfd.revents) {
             events.emplace(pfd.fd, static_cast<event>(pfd.revents));
             pfd.revents = 0;
-          } 
-        }        
+          }
+        }
       }
       return events;
     }
    private:
     std::vector<::pollfd> socket_fds_;
   };
-  
-  template <typename ProtocolFamily>
-  event poll(const basic_socket<ProtocolFamily>& sock, std::chrono::milliseconds timeout) {
-    ::pollfd pfd{};
-    pfd.fd = sock.fd();
-    pfd.events = static_cast<short>(event::all);
-    int r = ::poll(&pfd, 1, timeout.count());
-    SOCKCP_ASSERT(r >= 0, socket_error());
-    event res = static_cast<event>(pfd.revents);
-    return res;
-  }
 
   template <typename ProtocolFamily>
-  bool is_alive(const basic_socket<ProtocolFamily>& sock, std::chrono::milliseconds timeout) {
-    event ev = poll(sock, timeout);
-    return static_cast<bool>(ev & event::out) | static_cast<bool>(ev & event::in) | static_cast<bool>(ev & event::pri);
+  event poll(const basic_socket<ProtocolFamily>& sock, std::chrono::milliseconds timeout, event subs = event::all) {
+    ::pollfd pfd{};
+    pfd.fd = sock.fd();
+    pfd.events = static_cast<short>(subs);
+    int r = ::poll(&pfd, 1, timeout.count());
+    SOCKCP_ASSERT(r >= 0, socket_error("poll"));
+    event res = static_cast<event>(pfd.revents);
+    return res;
   }
 }  // namespace sockcp
 

@@ -19,7 +19,6 @@ int main(int argc, char* argv[]) {
   sockcp::socket cl_sock(sockcp::socktype::stream);
   sockcp::ipv4 addr(ipaddr, port);
   cl_sock.connect(addr);
-
   bool running = true;
   std::string msg;
   for(;running;) {
