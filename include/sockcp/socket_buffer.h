@@ -43,7 +43,9 @@ namespace sockcp {
     }
 
     ~basic_socket_buffer() noexcept {
-      flush();
+      if (buf_) {
+        flush();
+      }
       delete buf_;
     }
 
