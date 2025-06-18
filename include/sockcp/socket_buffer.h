@@ -43,8 +43,8 @@ namespace sockcp {
     }
 
     ~basic_socket_buffer() noexcept {
-      delete buf_;
       flush();
+      delete buf_;
     }
 
     const basic_socket<ProtocolFamily>& bound_socket() const noexcept {
