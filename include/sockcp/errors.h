@@ -39,6 +39,7 @@ class socket_error: public std::runtime_error {
       source_(source.begin(), source.end()) {}
 
   int code() { return errno_;}
+  const std::string& source() { return source_;}
  private:
   int errno_;
   std::string source_;
