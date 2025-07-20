@@ -190,7 +190,7 @@ namespace sockcp {
           !errno || errno == EAGAIN || errno == EWOULDBLOCK,
           socket_error("read")
         );
-        res.insert(res.end(), buf.begin(), buf.end());
+        res.insert(res.end(), buf.begin(), buf.begin() + rdbytes);
         count -= rdbytes;
       }
       return res;
