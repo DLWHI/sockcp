@@ -84,7 +84,7 @@ namespace sockcp {
     basic_socket(socktype type, int protocol = 0) 
         : type_(static_cast<int>(type)) {
       fd_ = ::socket(protocol_family, type_, protocol);
-      SOCKCP_ASSERT(fd_ > 0, socket_error("basic_socket"));
+      SOCKCP_ASSERT(fd_ >= 0, socket_error("basic_socket"));
     }
 
     basic_socket(basic_socket&) = delete;
@@ -96,7 +96,7 @@ namespace sockcp {
     basic_socket& operator=(basic_socket&& other) noexcept {
       fd_ = other.fd_;
       type_ = other.type_;
-      other.fd_ = 0;
+      other.fd_ = -1;
       other.type_ = 0;
       name_ = std::move(other.name_);
       return *this;
