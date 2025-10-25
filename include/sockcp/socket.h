@@ -19,7 +19,7 @@
 
 #endif
 
-#include "address.h"
+#include "inet_address.h"
 
 namespace sockcp {
 

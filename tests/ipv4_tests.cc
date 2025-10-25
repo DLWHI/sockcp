@@ -1,8 +1,7 @@
 #include <gtest/gtest.h>
 #include <iostream>
 
-#include "sockcp/address.h"
-#include "sockcp/unix_addr.h"
+#include "sockcp/inet_address.h"
 
 static const std::vector<::sockaddr_in> test_pool = {
   ::sockaddr_in{AF_INET, ::htons(4483), ::inet_addr("127.0.0.1")},
