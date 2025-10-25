@@ -35,3 +35,4 @@ class adapter_provider final {
 }  // namespace sockcp
 
 #endif  // SOCKCP_SOCKCP_ADAPTER_H_
+

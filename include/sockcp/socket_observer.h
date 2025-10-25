@@ -121,3 +121,4 @@ namespace sockcp {
 }  // namespace sockcp
 
 #endif  // SOCKCP_SOCKCP_SOCKET_OBSERVER_H_
+

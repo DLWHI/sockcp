@@ -10,7 +10,7 @@
 #include <sys/types.h>
 #include <sys/un.h>
 
-#include "errors.h"
+#include "error.h"
 
 namespace sockcp {
   struct unix_addr final {
@@ -85,4 +85,4 @@ namespace sockcp {
 }  // namespace sockcp
 
 #endif  // SOCKCP_SOCKCP_UNIX_ADDRESS_H_
-#endif
+#endif  // LINUX

@@ -26,7 +26,7 @@ class protocol_error: public std::runtime_error {
   protocol_error(const std::string_view& msg, const std::type_info& source)
       : std::runtime_error(msg.data()), source_(source) {}
 
-  const std::type_info& protocol() { return source_;}
+  const std::type_info& protocol() const noexcept { return source_;}
 private:
   const std::type_info& source_;
 };
@@ -38,8 +38,8 @@ class socket_error: public std::runtime_error {
       errno_(errno),
       source_(source) {}
 
-  int code() { return errno_;}
-  const std::string& source() { return source_;}
+  int code() const noexcept { return errno_;}
+  const std::string& source() const noexcept { return source_;}
  private:
   int errno_;
   std::string source_;
@@ -48,3 +48,4 @@ class socket_error: public std::runtime_error {
 }  // namespace sockcp
 
 #endif  // SOCKCP_SOCKCP_ERRORS_H_
+
