@@ -126,7 +126,7 @@ namespace sockcp {
       name_ = addr;
     }
 
-    const ProtocolFamily bound_address() const noexcept {
+    const ProtocolFamily& bound_address() const noexcept {
       return name_;
     }
 

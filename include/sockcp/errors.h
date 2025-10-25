@@ -21,9 +21,9 @@ class protocol_error: public std::runtime_error {
  public:
   protocol_error(const char* msg, const std::type_info& source)
       : std::runtime_error(msg), source_(source)  {}
-  protocol_error(std::string msg, const std::type_info& source)
+  protocol_error(const std::string& msg, const std::type_info& source)
       : std::runtime_error(msg.c_str()), source_(source) {}
-  protocol_error(std::string_view msg, const std::type_info& source)
+  protocol_error(const std::string_view& msg, const std::type_info& source)
       : std::runtime_error(msg.data()), source_(source) {}
 
   const std::type_info& protocol() { return source_;}
@@ -33,10 +33,10 @@ private:
 
 class socket_error: public std::runtime_error {
  public:
-  socket_error(const std::string_view& source) 
+  socket_error(const char* source) 
     : std::runtime_error(std::strerror(errno)),
       errno_(errno),
-      source_(source.begin(), source.end()) {}
+      source_(source) {}
 
   int code() { return errno_;}
   const std::string& source() { return source_;}
