@@ -29,7 +29,7 @@ int main(int argc, char* argv[]) {
     auto cl_sock = sv_sock.accept();
     std::this_thread::sleep_for(3000ms);
     cl_sock.write(std::string("I have come after 3000ms"));
-    std::cout << "Sent data to " << cl_sock.bound_address().to_string() << std::endl;
+    std::cout << "Sent data to " << cl_sock.name().to_string() << std::endl;
   }
   return 0;
 }

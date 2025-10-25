@@ -110,9 +110,9 @@ namespace sockcp {
 
     int type() const noexcept { return type_; }
 
-    bool is_blocking() const noexcept { return type_ & SOCK_NONBLOCK;}
+    bool blocking() const noexcept { return type_ & SOCK_NONBLOCK;}
 
-    void set_blocking(bool val) { 
+    void block(bool val) { 
       ::fcntl(fd_, F_SETFL, O_NONBLOCK*static_cast<int>(val));
       type_ &= ~SOCK_NONBLOCK;
       type_ |= static_cast<int>(val)*SOCK_NONBLOCK;
@@ -126,7 +126,7 @@ namespace sockcp {
       name_ = addr;
     }
 
-    const ProtocolFamily& bound_address() const noexcept {
+    const ProtocolFamily& name() const noexcept {
       return name_;
     }
 
