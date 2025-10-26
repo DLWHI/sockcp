@@ -85,7 +85,7 @@ namespace sockcp {
     void detach_socket(const basic_socket<ProtocolFamily>& sock) {
       pollfd_comp kek{sock.fd()};
       auto pos = std::find_if(socket_fds_.begin(), socket_fds_.end(), pollfd_comp{sock.fd()});
-      SOCKCP_ASSERT(pos != socket_fds_.end(), std::runtime_error("No such socket"));
+      SOCKCP_ASSERT(pos != socket_fds_.end(), std::logic_error("No such socket"));
       socket_fds_.erase(pos);
     }
 

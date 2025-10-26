@@ -34,15 +34,16 @@ private:
 class socket_error: public std::runtime_error {
  public:
   socket_error(const char* source) 
-    : std::runtime_error(std::strerror(errno)),
+    : std::runtime_error(std::string(source).append(": ").append(std::strerror(errno))),
       errno_(errno),
-      source_(source) {}
+      op_(what(), std::strchr(what(), ':') - what()) {}
 
   int code() const noexcept { return errno_;}
-  const std::string& source() const noexcept { return source_;}
+  
+  const std::string_view& operation() const noexcept { return op_;}
  private:
   int errno_;
-  std::string source_;
+  std::string_view op_;
 };
 
 }  // namespace sockcp

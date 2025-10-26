@@ -22,7 +22,6 @@
 #include "inet_address.h"
 
 namespace sockcp {
-
   enum class socktype {
     stream = SOCK_STREAM,
     datagram = SOCK_DGRAM,
@@ -79,6 +78,7 @@ namespace sockcp {
   template <typename ProtocolFamily>
   class basic_socket final {
    public:
+    
     static constexpr int protocol_family = ProtocolFamily::family;
 
     basic_socket(socktype type, int protocol = 0) 
