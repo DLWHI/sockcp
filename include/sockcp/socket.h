@@ -159,10 +159,10 @@ namespace sockcp {
       char c = -1;
       errno = 0;
       ::recv(fd_, &c, 1, MSG_DONTWAIT | MSG_PEEK);
-      SOCKCP_ASSERT(
-        !errno || errno == EAGAIN || errno == EWOULDBLOCK,
-        socket_error("peek")
-      );
+      if (errno == EAGAIN || errno == EWOULDBLOCK) {
+        return -1;
+      }
+      SOCKCP_ASSERT(!errno, socket_error("peek"));
       return c;
     }
 
@@ -186,8 +186,11 @@ namespace sockcp {
       for (; count && rdbytes == kBufLen;) {
         errno = 0;
         rdbytes = ::recv(fd_, buf.data(), kBufLen, 0);
+        if (errno == EAGAIN || errno == EWOULDBLOCK) {
+          return res;
+        }
         SOCKCP_ASSERT(
-          !errno || errno == EAGAIN || errno == EWOULDBLOCK,
+          !errno,
           socket_error("read")
         );
         res.insert(res.end(), buf.begin(), buf.begin() + rdbytes);
@@ -203,10 +206,7 @@ namespace sockcp {
       for (;count;) {
         errno = 0;
         std::size_t wrbytes = ::send(fd_, data, chunk, 0);
-        SOCKCP_ASSERT(
-          !errno || errno == EAGAIN || errno == EWOULDBLOCK,
-          socket_error("write")
-        );
+        SOCKCP_ASSERT(!errno, socket_error("write"));
         count -= wrbytes;
         data += wrbytes;
       }
