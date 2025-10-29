@@ -183,19 +183,15 @@ namespace sockcp {
       std::vector<char> buf;
       buf.resize(kBufLen);
       std::size_t rdbytes = kBufLen;
-      rdbytes = ::recv(fd_, buf.data(), kBufLen, 0);
-      SOCKCP_ASSERT(
-        !errno || errno == EAGAIN || errno == EWOULDBLOCK,
-        socket_error("read")
-      );
-      for (; count && rdbytes == kBufLen && errno != EAGAIN && errno != EWOULDBLOCK;) {
-        res.insert(res.end(), buf.begin(), buf.begin() + rdbytes);
-        count -= rdbytes;
+      for (; count && rdbytes == kBufLen;) {
+        errno = 0;
         rdbytes = ::recv(fd_, buf.data(), kBufLen, 0);
         SOCKCP_ASSERT(
           !errno || errno == EAGAIN || errno == EWOULDBLOCK,
           socket_error("read")
         );
+        res.insert(res.end(), buf.begin(), buf.begin() + rdbytes);
+        count -= rdbytes;
       }
       return res;
     }
