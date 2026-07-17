@@ -19,7 +19,8 @@ int main(int argc, char* argv[]) {
   } else if (argc > 1) {
     ipaddr = argv[1];
   }
-  sockcp::socket cl_sock(sockcp::socktype::stream | sockcp::socktype::nonblock);
+  sockcp::socket cl_sock(sockcp::socktype::stream);
+  cl_sock.set_block(false);
   sockcp::ipv4 addr(ipaddr, port);
 
   cl_sock.connect(addr);
