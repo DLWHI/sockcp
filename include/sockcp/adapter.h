@@ -3,16 +3,16 @@
 
 #include <string>
 
-#include "address.h"
+#include "inet_address.h"
 
-#if defined(PROJ_OS_LINUX) || defined(PROJ_OS_OSX) || defined(PROJ_OS_CYGWIN)
+#if defined (__unix__) || (defined (__APPLE__) && defined (__MACH__)) || defined(__CYGWIN__)
 
 #include <sys/types.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
 
-#elif defined(PROJ_OS_WINDOWS)
-
+#elif defined(_WIN32)
+#error Adapter settings are not supported outside linux environment
 #include <winsock.h>
 
 #endif

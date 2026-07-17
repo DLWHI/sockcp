@@ -1,5 +1,5 @@
-#ifndef SOCKCP_SOCKCP_ERRORS_H_
-#define SOCKCP_SOCKCP_ERRORS_H_
+#ifndef SOCKCP_SOCKCP_ERROR_H_
+#define SOCKCP_SOCKCP_ERROR_H_
 
 #include <cerrno>
 #include <cstring>
@@ -36,7 +36,7 @@ class socket_error: public std::runtime_error {
   socket_error(const char* source) 
     : std::runtime_error(std::string(source).append(": ").append(std::strerror(errno))),
       errno_(errno),
-      op_(what(), std::strchr(what(), ':') - what()) {}
+      op_(source) {}
 
   int code() const noexcept { return errno_;}
   
@@ -48,5 +48,11 @@ class socket_error: public std::runtime_error {
 
 }  // namespace sockcp
 
-#endif  // SOCKCP_SOCKCP_ERRORS_H_
+class disconnect_error: public std::runtime_error {
+ public:
+  disconnect_error() 
+    : std::runtime_error("Attempt operation on disconnected socket") {}
+};
+
+#endif  // SOCKCP_SOCKCP_ERROR_H_
 

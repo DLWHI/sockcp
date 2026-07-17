@@ -1,21 +1,24 @@
-#ifndef SOCKCP_SOCKCP_ADDRESS_H_
-#define SOCKCP_SOCKCP_ADDRESS_H_
+#ifndef SOCKCP_SOCKCP_INET_ADDRESS_H_
+#define SOCKCP_SOCKCP_INET_ADDRESS_H_
 
 #include <array>
+#include <cstdint>
 #include <string>
 #include <limits>
-#include <charconv>
+// #include <charconv>
 
-#if defined(PROJ_OS_LINUX) || defined(PROJ_OS_OSX) || defined(PROJ_OS_CYGWIN)
+#if defined (__unix__) || (defined (__APPLE__) && defined (__MACH__)) || defined(__CYGWIN__)
 
 #include <sys/types.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
 
-#elif defined(PROJ_OS_WINDOWS)
+#elif defined(_WIN32)
 
-#include <winsock.h>
+#include <ws2tcpip.h>
 
+#else
+#error Unknown socket API.
 #endif
 
 #include "error.h"
@@ -203,5 +206,5 @@ namespace sockcp {
   };
 }  // namespace sockcp
 
-#endif  // SOCKCP_SOCKCP_ADDRESS_H_
+#endif  // SOCKCP_SOCKCP_INET_ADDRESS_H_
 

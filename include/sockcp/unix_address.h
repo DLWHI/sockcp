@@ -1,6 +1,9 @@
-#if defined(PROJ_OS_LINUX) || defined(PROJ_OS_OSX) || defined(PROJ_OS_CYGWIN)
 #ifndef SOCKCP_SOCKCP_UNIX_ADDRESS_H_
 #define SOCKCP_SOCKCP_UNIX_ADDRESS_H_
+
+#if !(defined (__unix__) || (defined (__APPLE__) && defined (__MACH__)) || defined(__CYGWIN__))
+#error Unix sockets are not supported on Windows
+#endif
 
 #include <array>
 #include <string>
@@ -85,4 +88,3 @@ namespace sockcp {
 }  // namespace sockcp
 
 #endif  // SOCKCP_SOCKCP_UNIX_ADDRESS_H_
-#endif  // LINUX

@@ -5,66 +5,33 @@
 #include <string>
 #include <string_view>
 
-#if defined(PROJ_OS_LINUX) || defined(PROJ_OS_OSX) || defined(PROJ_OS_CYGWIN)
+#if defined (__unix__) || (defined (__APPLE__) && defined (__MACH__)) || defined(__CYGWIN__)
 
 #include <fcntl.h>
 #include <poll.h>
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#define sock_close(x) ::close(x)
 
-#elif defined(PROJ_OS_WINDOWS)
+#elif defined(_WIN32)
 
-#include <winsock.h>
+#include "wininit.h"
+#define sock_close(x) ::closesocket(x)
 
+#else
+#error Unknown socket API.
 #endif
 
 #include "inet_address.h"
 
 namespace sockcp {
-  enum class socktype {
-    stream = SOCK_STREAM,
-    datagram = SOCK_DGRAM,
-    seqpacket = SOCK_SEQPACKET,
-    raw = SOCK_RAW,
-    rdm = SOCK_RDM,
-    nonblock = SOCK_NONBLOCK,
-    cloexec = SOCK_CLOEXEC
-  };
+#if defined (__unix__) || (defined (__APPLE__) && defined (__MACH__)) || defined(__CYGWIN__)
 
-  constexpr socktype operator&(socktype lhs, socktype rhs) {
-    return static_cast<socktype>
-      (static_cast<int>(lhs) & static_cast<int>(rhs));
-  }
+  using socklen_t = ::socklen_t;
+  using fd_type = int;
 
-  constexpr socktype operator|(socktype lhs, socktype rhs) {
-    return static_cast<socktype>
-      (static_cast<int>(lhs) | static_cast<int>(rhs));
-  }
-
-  constexpr socktype operator^(socktype lhs, socktype rhs) {
-    return static_cast<socktype>
-      (static_cast<int>(lhs) ^ static_cast<int>(rhs));
-  }
-
-  constexpr socktype operator~(socktype x) {
-    return static_cast<socktype>(~static_cast<int>(x));
-  }
-
-  constexpr socktype& operator&=(socktype& lhs, socktype  rhs) {
-    lhs = lhs & rhs;
-    return lhs;
-  }
-
-  constexpr socktype& operator|=(socktype& lhs, socktype  rhs) {
-    lhs = lhs | rhs;
-    return lhs;
-  }
-
-  constexpr socktype& operator^=(socktype& lhs, socktype  rhs) {
-    lhs = lhs ^ rhs;
-    return lhs;
-  }
+  static constexpr fd_type fd_invalid = -1;  
 
   enum class closeway {
     read = SHUT_RD,
@@ -74,6 +41,30 @@ namespace sockcp {
     wr = SHUT_WR,
     rdwr = SHUT_RDWR
   };
+#elif defined(_WIN32)
+
+  using socklen_t = int;
+  using fd_type = ::SOCKET;
+  
+  static constexpr fd_type fd_invalid = INVALID_SOCKET;  
+
+  enum class closeway {
+    read = SD_RECEIVE,
+    write = SD_SEND,
+    readwrite = SD_BOTH,
+    rd = SD_RECEIVE,
+    wr = SD_SEND,
+    rdwr = SD_BOTH
+  };
+#endif
+
+  enum class socktype {
+    stream = SOCK_STREAM,
+    datagram = SOCK_DGRAM,
+    seqpacket = SOCK_SEQPACKET,
+    raw = SOCK_RAW,
+    rdm = SOCK_RDM
+  };
 
   template <typename ProtocolFamily>
   class basic_socket final {
@@ -82,13 +73,19 @@ namespace sockcp {
     static constexpr int protocol_family = ProtocolFamily::family;
 
     basic_socket(socktype type, int protocol = 0) 
-        : type_(static_cast<int>(type)) {
+        : type_(static_cast<int>(type)), blocking_(false) {
+#if defined(_WIN32)
+      wsa_ = wsadata_allocator().allocate();
+#endif  // _WIN32
       fd_ = ::socket(protocol_family, type_, protocol);
       SOCKCP_ASSERT(fd_ >= 0, socket_error("basic_socket"));
     }
 
     basic_socket(basic_socket&) = delete;
     basic_socket(basic_socket&& other) noexcept {
+#if defined(_WIN32)
+      wsa_ = wsadata_allocator().allocate();
+#endif  // _WIN32
       *this = std::move(other);
     }
 
@@ -96,26 +93,41 @@ namespace sockcp {
     basic_socket& operator=(basic_socket&& other) noexcept {
       fd_ = other.fd_;
       type_ = other.type_;
-      other.fd_ = -1;
+      blocking_ = other.blocking_;
+      other.fd_ = fd_invalid;
       other.type_ = 0;
+      other.blocking_ = false;
       name_ = std::move(other.name_);
       return *this;
     }
 
     ~basic_socket() noexcept {
+
+#if defined(_WIN32)
+      SOCKCP_WRAP_NOEXCEPT(shutdown(closeway::readwrite););
       close();
+      wsadata_allocator().deallocate();
+#else
+      close();
+#endif  // _WIN32
     }
 
-    int fd() const noexcept { return fd_; }
+    fd_type fd() const noexcept { return fd_; }
 
     int type() const noexcept { return type_; }
 
-    bool blocking() const noexcept { return type_ & SOCK_NONBLOCK;}
+    bool blocking() const noexcept {
+      return blocking_;
+    }
 
-    void block(bool val) { 
-      ::fcntl(fd_, F_SETFL, O_NONBLOCK*static_cast<int>(val));
-      type_ &= ~SOCK_NONBLOCK;
-      type_ |= static_cast<int>(val)*SOCK_NONBLOCK;
+    void set_block(bool val) {
+      unsigned long opt = static_cast<int>(val);
+      blocking_ = val;
+#if defined(_WIN32)
+      SOCKCP_ASSERT(!ioctlsocket(fd_, FIONBIO, &opt), socket_error("block"));      
+#else
+      SOCKCP_ASSERT(!::fcntl(fd_, F_SETFL, O_NONBLOCK*opt), socket_error("block"));
+#endif  // _WIN32 
     }
 
     void bind(ProtocolFamily addr) {
@@ -158,7 +170,7 @@ namespace sockcp {
     char peek() {
       char c = -1;
       errno = 0;
-      ::recv(fd_, &c, 1, MSG_DONTWAIT | MSG_PEEK);
+      ::recv(fd_, &c, 1, MSG_PEEK);
       if (errno == EAGAIN || errno == EWOULDBLOCK) {
         return -1;
       }
@@ -174,6 +186,7 @@ namespace sockcp {
         !errno || errno == EAGAIN || errno == EWOULDBLOCK,
         socket_error("read")
       );
+      SOCKCP_ASSERT(rdbytes > 0, disconnect_error());
       return rdbytes;
     }
 
@@ -196,6 +209,7 @@ namespace sockcp {
         res.insert(res.end(), buf.begin(), buf.begin() + rdbytes);
         count -= rdbytes;
       }
+      SOCKCP_ASSERT(!res.empty(), disconnect_error());
       return res;
     }
 
@@ -229,17 +243,21 @@ namespace sockcp {
     }
 
     void close() noexcept {
-      SOCKCP_WRAP_NOEXCEPT(::close(fd_);)
+      SOCKCP_WRAP_NOEXCEPT(sock_close(fd_);)
     }
 
     
    private:
-    basic_socket(int fd, ProtocolFamily addr) noexcept
+    basic_socket(fd_type fd, ProtocolFamily addr) noexcept
         : fd_(fd), name_(addr) {}
 
-    int fd_;
+    fd_type fd_;
     int type_;
+    bool blocking_;
     ProtocolFamily name_;
+#if defined(_WIN32)
+    const WSADATA* wsa_;
+#endif  // _WIN32
   };
 
   using ipv4socket = basic_socket<ipv4>;
